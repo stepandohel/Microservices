@@ -1,0 +1,23 @@
+version: '3.4'
+
+services:
+  catalog.webapi:
+    image: ${DOCKER_REGISTRY-}catalogwebapi
+    build:
+      context: .
+      dockerfile: Services/Catalog/Catalog.WebApi/Dockerfile
+
+  identity.webapi:
+    image: ${DOCKER_REGISTRY-}identitywebapi
+    build:
+      context: .
+      dockerfile: Services/Identity/Identity.WebApi/Dockerfile
+  
+  basket.webapi:
+    image: ${DOCKER_REGISTRY-}basketwebapi
+    build:
+      context: .
+      dockerfile: Services/Basket/Basket.WebApi/Dockerfile
+ 
+  envoygateway:
+     build: Envoy/
