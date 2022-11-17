@@ -1,48 +1,49 @@
 ﻿using Basket.Application.Middleware.Exceptions;
+using Basket.Application.Middleware.MiddlewareExtensions;
 using Basket.Application.Middleware.ServiceExceptions;
 using Microsoft.AspNetCore.Http;
-using System.Text;
 
 namespace Basket.Application.Middleware
 {
     public class ExceptionMiddleware
     {
-        private readonly RequestDelegate _next;
-        public ExceptionMiddleware(RequestDelegate next)
+        private readonly RequestDelegate _nextRequest;
+
+        public ExceptionMiddleware(RequestDelegate nextRequest)
         {
-            this._next = next;
+            this._nextRequest = nextRequest;
         }
+
         public async Task InvokeAsync(HttpContext context)
         {
             try
             {
-                await _next.Invoke(context);
+                await _nextRequest.Invoke(context);
             }
             catch (ServiceException ex)
             {
                 switch (ex.Type)
                 {
                     case ServiceErrorType.DifferentIds:
-                        context.Response.StatusCode = StatusCodes.Status400BadRequest;
-                        byte[] differentIdResponseString = Encoding.UTF8.GetBytes("Different Ids");
-                        context.Response.ContentType = "application/json";
-                        await context.Response.Body.WriteAsync(differentIdResponseString, 0, differentIdResponseString.Length);
+                        await ResponseExtension.CreateResponseAsync(context, StatusCodes.Status400BadRequest, "Different Ids");
                         break;
+
                     case ServiceErrorType.NoEntity:
-                        context.Response.StatusCode = StatusCodes.Status400BadRequest;
-                        byte[] noEntityResponseString = Encoding.UTF8.GetBytes("No Entity with this id");
-                        context.Response.ContentType = "application/json";
-                        await context.Response.Body.WriteAsync(noEntityResponseString, 0, noEntityResponseString.Length);
+                        await ResponseExtension.CreateResponseAsync(context, StatusCodes.Status400BadRequest, "No Entity with this id");
+                        break;
+
+                    case ServiceErrorType.InvalidId:
+                        await ResponseExtension.CreateResponseAsync(context, StatusCodes.Status400BadRequest, "Invalid Id");
+                        break;
+
+                    default:
+                        await ResponseExtension.CreateResponseAsync(context, StatusCodes.Status500InternalServerError, "Unknown Exeption");
                         break;
                 }
-
             }
             catch
             {
-                context.Response.StatusCode = StatusCodes.Status400BadRequest;
-                context.Response.ContentType = "application/json";
-                byte[] data = Encoding.UTF8.GetBytes("Bad request");
-                await context.Response.Body.WriteAsync(data, 0, data.Length);
+                await ResponseExtension.CreateResponseAsync(context, StatusCodes.Status400BadRequest, "Bad Request");
             }
         }
     }

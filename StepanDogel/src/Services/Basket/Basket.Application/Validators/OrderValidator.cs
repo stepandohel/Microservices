@@ -11,6 +11,7 @@ namespace Basket.Application.Validators
             RuleFor(x => x.Products).NotEmpty().WithMessage("Products must be selected");
         }
     }
+
     public sealed class OrderPutValidator : AbstractValidator<OrderPutModel>
     {
         public OrderPutValidator()

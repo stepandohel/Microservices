@@ -14,7 +14,7 @@ namespace Basket.Infastructure.Repository
         public async Task<List<Product>> GetListByIdsAsync(List<int> ids, CancellationToken cancellationToken)
         {
             var items = await _dbContext.Products.Where(x => ids.Contains(x.Id)).ToListAsync(cancellationToken);
-
+            
             return items;
         }
     }

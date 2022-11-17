@@ -1,10 +1,6 @@
 ﻿namespace Catalog.Application.Models.Product
 {
-    public class ProductPostModel
+    public class ProductPostModel : BaseProductModel
     {
-        public string Name { get; set; }
-        public string Description { get; set; }
-        public int CategoryId { get; set; }
-        public double Cost { get; set; }
     }
 }

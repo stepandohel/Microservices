@@ -10,6 +10,7 @@ namespace Basket.Application.Validators
             RuleFor(x => x.Price).NotEmpty().WithMessage("Please enter price");
         }
     }
+
     public sealed class ProductPutValidator : AbstractValidator<ProductPutModel>
     {
         public ProductPutValidator()

@@ -1,26 +1,49 @@
 ﻿using AutoMapper;
+using Catalog.Application.Middleware.ServiceExceptions;
 using Catalog.Application.Models.Category;
-using Catalog.Domain.Interfaces;
+using Catalog.Domain.Repository.Interfaces;
 using MediatR;
 
 namespace Catalog.Application.Category.Commands.Update
 {
-    public class UpdateCategoryCommandHandler : IRequestHandler<UpdateCategoryCommand, bool>
+    public class UpdateCategoryCommandHandler : IRequestHandler<UpdateCategoryCommand, CategoryReadModel>
     {
-        private readonly IBaseRepository<Domain.Entities.Category, CategoryReadModel, CategoryPostModel, CategoryPutModel> _repository;
+        private readonly IRepositoryManager _repository;
         private readonly IMapper _mapper;
 
-        public UpdateCategoryCommandHandler(IBaseRepository<Domain.Entities.Category, CategoryReadModel, CategoryPostModel, CategoryPutModel> repository, IMapper mapper)
+        public UpdateCategoryCommandHandler(IRepositoryManager repository, IMapper mapper)
         {
             _repository = repository;
             _mapper = mapper;
         }
-        public async Task<bool> Handle(UpdateCategoryCommand request, CancellationToken cancellationToken)
+        public async Task<CategoryReadModel> Handle(UpdateCategoryCommand request, CancellationToken cancellationToken)
         {
-            var category = _mapper.Map<CategoryPutModel>(request);
-            var isTrue = await _repository.PutAsync(category, cancellationToken);
+            try
+            {
+                if (request.Id <= default(int))
+                {
+                    throw new ServiceException(ServiceErrorType.InvalidId);
+                }
 
-            return isTrue;
+                var isCategoryExist =
+                    await _repository.CategoryRepository.GetAnyAsync(customer => customer.Id.Equals(request.Id),
+                        cancellationToken);
+
+                if (!isCategoryExist)
+                {
+                    throw new ServiceException(ServiceErrorType.NoEntity);
+                }
+
+                var category = _mapper.Map<Catalog.Domain.Entities.Category>(request);
+                var updatedCategory = await _repository.CategoryRepository.UpdateAsync(category);
+                await _repository.SaveAsync(cancellationToken);
+
+                return _mapper.Map<CategoryReadModel>(updatedCategory);
+            }
+            catch (Exception ex)
+            {
+                throw new ServiceException(ServiceErrorType.UnknownException, "UnknownExeption", ex);
+            }
         }
 
     }

@@ -3,7 +3,7 @@ using FluentValidation;
 
 namespace Basket.Application.Validators
 {
-    public sealed class CustomerPostValidator : AbstractValidator<CustomerPostModel>
+    public sealed class CustomerPostValidator : AbstractValidator<CustomerCreateModel>
     {
         public CustomerPostValidator()
         {
@@ -12,7 +12,8 @@ namespace Basket.Application.Validators
             RuleFor(x => x.Address).NotEmpty().WithMessage("Please enter address");
         }
     }
-    public sealed class CustomerPutValidator : AbstractValidator<CustomerPutModel>
+
+    public sealed class CustomerPutValidator : AbstractValidator<CustomerUpdateModel>
     {
         public CustomerPutValidator()
         {

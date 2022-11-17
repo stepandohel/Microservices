@@ -21,55 +21,97 @@ namespace Basket.Infastructure.Services
 
         public async Task<List<CustomerViewModel>> GetAllAsync(CancellationToken cancellationToken)
         {
-            var customers = await _repository.CustomerRepository.GetAllAsync(cancellationToken);
-
-            var customerViews = _mapper.Map<List<CustomerViewModel>>(customers);
-
-            return customerViews;
-        }
-
-        public async Task<int> AddAsync(CustomerPostModel customerPostModel, CancellationToken cancellationToken)
-        {
-            var customer = _mapper.Map<Customer>(customerPostModel);
-
-            var id = await _repository.CustomerRepository.PostAsync(customer, cancellationToken);
-            await _repository.SaveAsync(cancellationToken);
-
-            return id;
-        }
-
-        public async Task<bool> UpdateAsync(int id, CustomerPutModel customerPutModel, CancellationToken cancellationToken)
-        {
-            if (!id.Equals(customerPutModel.Id))
+            try
             {
-                throw new ServiceException(ServiceErrorType.DifferentIds);
+                var customers = await _repository.CustomerRepository.GetAllAsync(cancellationToken);
+                var customerViews = _mapper.Map<List<CustomerViewModel>>(customers);
+
+                return customerViews;
             }
-            var item = await _repository.CustomerRepository.GetByIdAsync(id, cancellationToken);
-            if (item == null)
+            catch (Exception ex)
             {
-                throw new ServiceException(ServiceErrorType.NoEntity); ;
+                throw new ServiceException(ServiceErrorType.UnknownException, "UnknownExeption", ex);
             }
-
-            var customer = _mapper.Map<Customer>(customerPutModel);
-
-            var istrue = await _repository.CustomerRepository.PutAsync(customer, cancellationToken);
-            await _repository.SaveAsync(cancellationToken);
-
-            return istrue;
         }
+
+        public async Task<int> CreateAsync(CustomerCreateModel customerPostModel, CancellationToken cancellationToken)
+        {
+            try
+            {
+                var customer = _mapper.Map<Customer>(customerPostModel);
+                var id = await _repository.CustomerRepository.CreateAsync(customer, cancellationToken);
+                await _repository.SaveAsync(cancellationToken);
+
+                return id;
+            }
+            catch (Exception ex)
+            {
+                throw new ServiceException(ServiceErrorType.UnknownException, "UnknownExeption", ex);
+            }
+        }
+
+        public async Task<CustomerViewModel> UpdateAsync(int id, CustomerUpdateModel customerPutModel, CancellationToken cancellationToken)
+        {
+            try
+            {
+                if (id <= default(int))
+                {
+                    throw new ServiceException(ServiceErrorType.InvalidId);
+                }
+
+                if (!id.Equals(customerPutModel.Id))
+                {
+                    throw new ServiceException(ServiceErrorType.DifferentIds);
+                }
+
+                var isCustomerExist = await _repository.CustomerRepository.GetAnyAsync(customer => customer.Id.Equals(id), cancellationToken);
+
+                if (!isCustomerExist)
+                {
+                    throw new ServiceException(ServiceErrorType.NoEntity); ;
+                }
+
+                var customer = _mapper.Map<Customer>(customerPutModel);
+                var updatedCustomer = await _repository.CustomerRepository.UpdateAsync(customer);
+                await _repository.SaveAsync(cancellationToken);
+
+                return _mapper.Map<CustomerViewModel>(updatedCustomer);
+            }
+            catch (Exception ex)
+            {
+                throw new ServiceException(ServiceErrorType.UnknownException, "UnknownExeption", ex);
+            }
+        }
+
 
         public async Task<bool> DeleteAsync(int customerId, CancellationToken cancellationToken)
         {
-            var item = await _repository.CustomerRepository.GetByIdAsync(customerId, cancellationToken);
-            if (item == null)
+            try
             {
-                throw new ServiceException(ServiceErrorType.NoEntity); ;
+                if (customerId <= default(int))
+                {
+                    throw new ServiceException(ServiceErrorType.InvalidId);
+                }
+
+                var isCustomerExist =
+                    await _repository.CustomerRepository.GetAnyAsync(customer => customer.Id.Equals(customerId),
+                        cancellationToken);
+
+                if (!isCustomerExist)
+                {
+                    throw new ServiceException(ServiceErrorType.NoEntity);
+                    ;
+                }
+
+                var isCustomerDeleted = await _repository.CustomerRepository.DeleteAsync(customerId, cancellationToken);
+                await _repository.SaveAsync(cancellationToken);
+
+                return isCustomerDeleted;
             }
-
-            var istrue = await _repository.CustomerRepository.DeleteAsync(customerId, cancellationToken);
-            await _repository.SaveAsync(cancellationToken);
-
-            return istrue;
+            catch (Exception ex)
+            {
+                throw new ServiceException(ServiceErrorType.UnknownException, "UnknownExeption", ex);
+            }
         }
     }
 }

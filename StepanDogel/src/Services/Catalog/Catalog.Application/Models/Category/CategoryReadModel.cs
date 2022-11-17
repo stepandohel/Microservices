@@ -1,8 +1,7 @@
 ﻿namespace Catalog.Application.Models.Category
 {
-    public class CategoryReadModel
+    public class CategoryReadModel : BaseCategoryModel
     {
-        public string Name { get; set; }
-        public string Description { get; set; }
+        public int Id { get; set; }
     }
 }

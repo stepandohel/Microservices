@@ -1,5 +1,5 @@
-﻿using Identity.WebApi.Data;
-using Identity.WebApi.IdentityServer;
+﻿using AutoMapper;
+using Identity.Application.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
@@ -9,29 +9,23 @@ namespace Identity.WebApi.Controllers
     [Route("[controller]")]
     public class UserController : ControllerBase
     {
-        private readonly SignInManager<IdentityUser> _signInManager;
+        private readonly SignInManager<IdentityUser> signInManager;
+        private readonly IMapper mapper;
 
-        public UserController(SignInManager<IdentityUser> signInManager)
+        public UserController(SignInManager<IdentityUser> signInManager, IMapper mapper)
         {
-            _signInManager = signInManager;
+            this.signInManager = signInManager;
+            this.mapper = mapper;
         }
-        [HttpPost("registration")]
+
+        [HttpPost]
         public async Task<AuthenticateRequest> Registation(AuthenticateRequest model)
         {
-            var user = new IdentityUser() { UserName = model.Username };
-            var resut = await _signInManager.UserManager.CreateAsync(user, model.Password);
-            return model;
+            var user = mapper.Map<IdentityUser>(model);
+            var resut = await signInManager.UserManager.CreateAsync(user, model.Password);
+            await signInManager.UserManager.AddToRoleAsync(user, "Visitor");
 
-        }
-        [HttpPost("authenticate")]
-        public async Task<ActionResult> Authenticate(AuthenticateRequest model)
-        {
-            var user = _signInManager.UserManager.Users.FirstOrDefault(x => x.UserName == model.Username);
-            if (user == null) return BadRequest();
-            var result = await _signInManager.PasswordSignInAsync(user.UserName, model.Password, false, false);
-            if (!result.Succeeded)
-                return StatusCode(500);
-            return Ok();
+            return model;
         }
     }
 }

@@ -11,21 +11,30 @@ namespace Basket.Application.Mapping
         public AppMappingProfile()
         {
             CreateMap<Customer, CustomerViewModel>().ReverseMap();
-            CreateMap<CustomerPostModel, Customer>();
-            CreateMap<CustomerPutModel, Customer>();
+            CreateMap<CustomerCreateModel, Customer>()
+                .ForMember(dest => dest.Id, opt => opt.Ignore())
+                .ForMember(dest => dest.Orders, opt => opt.Ignore());
+            CreateMap<CustomerUpdateModel, Customer>()
+                .ForMember(dest => dest.Orders, opt => opt.Ignore());
 
             CreateMap<Product, ProductViewModel>().ReverseMap();
-            CreateMap<ProductPostModel, Product>();
-            CreateMap<ProductPutModel, Product>();
+            CreateMap<ProductPostModel, Product>()
+                .ForMember(dest => dest.Id, opt => opt.Ignore())
+                .ForMember(dest => dest.Orders, opt => opt.Ignore());
+            CreateMap<ProductPutModel, Product>()
+                .ForMember(dest => dest.Orders, opt => opt.Ignore());
 
             CreateMap<Order, OrderViewModel>()
                 .ForMember(dest => dest.CustomerView, opt => opt.MapFrom(x => x.Customer));
-            CreateMap<OrderViewModel, Order>();
             CreateMap<OrderPostModel, Order>()
-                .ForMember(dest => dest.Products, opt => opt.Ignore());
+                .ForMember(dest => dest.Id, opt => opt.Ignore())
+                .ForMember(dest => dest.Products, opt => opt.Ignore())
+                .ForMember(dest => dest.Amount, opt => opt.Ignore())
+                .ForMember(dest => dest.Customer, opt => opt.Ignore());
             CreateMap<OrderPutModel, Order>()
-                .ForMember(dest => dest.Products, opt => opt.Ignore());
-
+                .ForMember(dest => dest.Products, opt => opt.Ignore())
+                .ForMember(dest => dest.Amount, opt => opt.Ignore())
+                .ForMember(dest => dest.Customer, opt => opt.Ignore());
         }
     }
 }

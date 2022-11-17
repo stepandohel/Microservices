@@ -1,19 +1,17 @@
-using Basket.Application.IoC;
+using Basket.Application.DI;
 using Basket.Application.Middleware;
-using Basket.Domain.Data;
-using Basket.Infastructure.Ioc;
-using Basket.Infastructure.Repository.Interfaces;
-using Microsoft.EntityFrameworkCore;
+using Basket.Infastructure.DI;
+using Basket.Infastructure.GRPC.GrpcServices;
+using Basket.Infastructure.DI;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
 ConfigurationManager configuration = builder.Configuration;
-builder.Services.AddDbContext<BasketDbContext>(option => option.UseNpgsql(configuration.GetConnectionString("DefaultConnection"),
-    x => x.MigrationsAssembly(typeof(IBaseRepository<>).Assembly.FullName)
-    ));
-builder.Services.AddControllers()
+
+builder.Services.AddContext(configuration)
+    .AddControllers()
     .AddServices()
     .AddApplication();
 
@@ -21,13 +19,10 @@ builder.Services.AddControllers()
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddGrpc();
 
-var app = builder.Build();
-using (var scope = app.Services.CreateScope())
-{
-    var context = scope.ServiceProvider.GetRequiredService<BasketDbContext>();
-    await context.Database.MigrateAsync();
-}
+var app = await builder.Build()
+    .MigrateDatabaseAsync();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -38,6 +33,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseAuthorization();
 app.UseMiddleware<ExceptionMiddleware>();
+app.MapGrpcService<CustomerGrpcService>();
 app.MapControllers();
 
 app.Run();

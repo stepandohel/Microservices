@@ -8,6 +8,7 @@ namespace Basket.Domain.Data
         public DbSet<Product> Products { get; set; } = null!;
         public DbSet<Order> Orders { get; set; } = null!;
         public DbSet<Customer> Customers { get; set; } = null!;
+
         public BasketDbContext(DbContextOptions<BasketDbContext> options) : base(options)
         {
         }

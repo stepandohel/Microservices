@@ -21,64 +21,114 @@ namespace Basket.Infastructure.Services
 
         public async Task<List<ProductViewModel>> GetAllAsync(CancellationToken cancellationToken)
         {
-            var products = await _repository.ProductRepository.GetAllAsync(cancellationToken);
+            try
+            {
+                var products = await _repository.ProductRepository.GetAllAsync(cancellationToken);
+                var productViews = _mapper.Map<List<ProductViewModel>>(products);
 
-            var productViews = _mapper.Map<List<ProductViewModel>>(products);
-
-            return productViews;
+                return productViews;
+            }
+            catch (Exception ex)
+            {
+                throw new ServiceException(ServiceErrorType.UnknownException, "UnknownExeption", ex);
+            }
         }
 
         public async Task<List<ProductViewModel>> GetListByIdsAsync(List<int> ids, CancellationToken cancellationToken)
         {
-            var products = await _repository.ProductRepository.GetListByIdsAsync(ids, cancellationToken);
+            try
+            {
+                var products = await _repository.ProductRepository.GetListByIdsAsync(ids, cancellationToken);
+                var productViews = _mapper.Map<List<ProductViewModel>>(products);
 
-            var productViews = _mapper.Map<List<ProductViewModel>>(products);
-
-            return productViews;
+                return productViews;
+            }
+            catch (Exception ex)
+            {
+                throw new ServiceException(ServiceErrorType.UnknownException, "UnknownExeption", ex);
+            }
         }
 
-        public async Task<int> AddAsync(ProductPostModel productPostModel, CancellationToken cancellationToken)
+        public async Task<int> CreateAsync(ProductPostModel productPostModel, CancellationToken cancellationToken)
         {
-            var product = _mapper.Map<Product>(productPostModel);
+            try
+            {
+                var product = _mapper.Map<Product>(productPostModel);
+                var id = await _repository.ProductRepository.CreateAsync(product, cancellationToken);
+                await _repository.SaveAsync(cancellationToken);
 
-            var id = await _repository.ProductRepository.PostAsync(product, cancellationToken);
-            await _repository.SaveAsync(cancellationToken);
-
-            return id;
+                return id;
+            }
+            catch (Exception ex)
+            {
+                throw new ServiceException(ServiceErrorType.UnknownException, "UnknownExeption", ex);
+            }
         }
 
-        public async Task<bool> UpdateAsync(int id, ProductPutModel productPutModel, CancellationToken cancellationToken)
+        public async Task<ProductViewModel> UpdateAsync(int id, ProductPutModel productPutModel, CancellationToken cancellationToken)
         {
-            if (!id.Equals(productPutModel.Id))
+            try
             {
-                throw new ServiceException(ServiceErrorType.DifferentIds);
+                if (id <= default(int))
+                {
+                    throw new ServiceException(ServiceErrorType.InvalidId);
+                }
+
+                if (!id.Equals(productPutModel.Id))
+                {
+                    throw new ServiceException(ServiceErrorType.DifferentIds);
+                }
+
+                var isProductExist =
+                    await _repository.ProductRepository.GetAnyAsync(product => product.Id.Equals(id),
+                        cancellationToken);
+
+                if (!isProductExist)
+                {
+                    throw new ServiceException(ServiceErrorType.NoEntity);
+                    ;
+                }
+
+                var product = _mapper.Map<Product>(productPutModel);
+
+                var updatedProduct = await _repository.ProductRepository.UpdateAsync(product);
+                await _repository.SaveAsync(cancellationToken);
+
+                return _mapper.Map<ProductViewModel>(updatedProduct);
             }
-            var item = await _repository.ProductRepository.GetByIdAsync(id, cancellationToken);
-            if (item == null)
+            catch (Exception ex)
             {
-                throw new ServiceException(ServiceErrorType.NoEntity); ;
+                throw new ServiceException(ServiceErrorType.UnknownException, "UnknownExeption", ex);
             }
-
-            var product = _mapper.Map<Product>(productPutModel);
-
-            var istrue = await _repository.ProductRepository.PutAsync(product, cancellationToken);
-            await _repository.SaveAsync(cancellationToken);
-
-            return istrue;
         }
 
         public async Task<bool> DeleteAsync(int productId, CancellationToken cancellationToken)
         {
-            var item = await _repository.ProductRepository.GetByIdAsync(productId, cancellationToken);
-            if (item == null)
+            try
             {
-                throw new ServiceException(ServiceErrorType.NoEntity); ;
+                if (productId <= default(int))
+                {
+                    throw new ServiceException(ServiceErrorType.InvalidId);
+                }
+
+                var isProductExist =
+                    await _repository.ProductRepository.GetAnyAsync(product => product.Id.Equals(productId),
+                        cancellationToken);
+
+                if (!isProductExist)
+                {
+                    throw new ServiceException(ServiceErrorType.NoEntity);
+                }
+
+                var isProductDeleted = await _repository.ProductRepository.DeleteAsync(productId, cancellationToken);
+                await _repository.SaveAsync(cancellationToken);
+
+                return isProductDeleted;
             }
-
-            var istrue = await _repository.ProductRepository.DeleteAsync(productId, cancellationToken);
-            await _repository.SaveAsync(cancellationToken);
-
-            return istrue;
+            catch (Exception ex)
+            {
+                throw new ServiceException(ServiceErrorType.UnknownException, "UnknownExeption", ex);
+            }
         }
     }
 }

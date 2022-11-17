@@ -1,96 +1,71 @@
-﻿using AutoMapper;
-using Catalog.Domain.Data;
+﻿using Catalog.Domain.Data;
 using Catalog.Domain.Data.Entities.Base;
 using Catalog.Domain.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
 
 namespace Catalog.Domain
 {
-    public class BaseRepository<TModel, TViewModel, TPostModel, TPutModel> : IBaseRepository<TModel, TViewModel, TPostModel, TPutModel>
-        where TModel : BaseEntity
-        where TViewModel : class
-        where TPostModel : class
-        where TPutModel : class
+    public abstract class BaseRepository<TEntity> : IBaseRepository<TEntity>
+        where TEntity : BaseEntity
     {
-        private readonly EfDbContext _dbContext;
-        private readonly IMapper _mapper;
-        public BaseRepository(EfDbContext dbContext, IMapper mapper)
+        protected readonly CatalogDbContext _dbContext;
+        protected readonly DbSet<TEntity> _entities;
+
+        public BaseRepository(CatalogDbContext dbContext)
         {
             _dbContext = dbContext;
-            _mapper = mapper;
+            _entities = _dbContext.Set<TEntity>();
         }
 
-        public async Task<int> PostAsync(TPostModel model, CancellationToken token)
+        public virtual async Task<List<TEntity>> GetAllAsync(CancellationToken cancellationToken, params string[] includes)
         {
-            try
-            {
-                var post = _mapper.Map<TModel>(model);
-                await _dbContext.Set<TModel>().AddAsync(post);
-                await _dbContext.SaveChangesAsync();
-
-                return post.Id;
-            }
-            catch
-            {
-                throw new Exception(); 
-            }
-        }
-
-        public async Task<bool> DeleteAsync(int id, CancellationToken token)
-        {
-            try
-            {
-                var item = await _dbContext.Set<TModel>().FindAsync(id);
-                if (item is not null)
-                {
-                    _dbContext.Set<TModel>().Remove(item);
-                    await _dbContext.SaveChangesAsync();
-
-                    return true;
-                }
-                return false;
-            }
-            catch
-            {
-                throw new Exception(); 
-            }
-        }
-
-        public async Task<TViewModel?> GetAsync(int id, CancellationToken token, params string[] includes)
-        {
-            var data = _dbContext.Set<TModel>().AsQueryable();
+            var data = _entities.AsQueryable();
             data = includes.Aggregate(data, (current, include) => current.Include(include));
-            var item = await data.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id);
+            var items = await data.AsNoTracking().ToListAsync(cancellationToken);
 
-            return _mapper.Map<TViewModel>(item);
+            return items;
         }
 
-        public async Task<List<TViewModel>> GetAllAsync(CancellationToken token, params string[] includes)
+        public virtual async Task<TEntity> GetByIdAsync(int id, CancellationToken cancellationToken, params string[] includes)
         {
-            var data = _dbContext.Set<TModel>().AsQueryable();
+            var data = _entities.AsQueryable();
             data = includes.Aggregate(data, (current, include) => current.Include(include));
-            var items = await data.AsNoTracking().ToListAsync();
+            var item = await data.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
 
-            return _mapper.Map<List<TViewModel>>(items);
+            return item;
         }
 
-        public async Task<bool> PutAsync(TPutModel model, CancellationToken token)
+        public async Task<bool> GetAnyAsync(Expression<Func<TEntity, bool>> expression, CancellationToken cancellationToken)
         {
-            try
-            {
-                if (model != null)
-                {
-                    _dbContext.Set<TModel>().Update(_mapper.Map<TModel>(model));
-                    await _dbContext.SaveChangesAsync();
+            return await _entities.AnyAsync(expression, cancellationToken);
+        }
 
-                    return true;
-                }
-                return false;
-            }
-            catch
+        public virtual async Task<int> CreateAsync(TEntity model, CancellationToken cancellationToken)
+        {
+            await _entities.AddAsync(model, cancellationToken);
+            return model.Id;
+        }
+
+        public virtual async Task<TEntity> UpdateAsync(TEntity model)
+        {
+            if (model is not null)
             {
-                throw new Exception();  
+                _entities.Update(model);
             }
+            return model;
+        }
+
+        public virtual async Task<bool> DeleteAsync(int id, CancellationToken cancellationToken)
+        {
+            var item = await _entities.FindAsync(id);
+            if (item is not null)
+            {
+                _entities.Remove(item);
+                return true;
+            }
+
+            return false;
         }
     }
 }

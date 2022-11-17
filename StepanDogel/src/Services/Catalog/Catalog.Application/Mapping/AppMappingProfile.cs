@@ -16,10 +16,10 @@ namespace Catalog.Application.Mapping
             CreateMap<ProductPutModel, Product>();
 
             CreateMap<Domain.Entities.Category, CategoryReadModel>().ReverseMap();
-            CreateMap<CategoryPostModel, Domain.Entities.Category>();
-            CreateMap<CategoryPutModel, Domain.Entities.Category>();
-            CreateMap<CreateCategoryCommand, CategoryPostModel>().ReverseMap();
-            CreateMap<UpdateCategoryCommand, CategoryPutModel>().ReverseMap();
+            CreateMap<CategoryCreateModel, Domain.Entities.Category>();
+            CreateMap<CategoryUpdateModel, Domain.Entities.Category>();
+            CreateMap<CreateCategoryCommand, Domain.Entities.Category>().ReverseMap();
+            CreateMap<UpdateCategoryCommand, Domain.Entities.Category>().ReverseMap();
         }
     }
 }

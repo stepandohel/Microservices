@@ -1,0 +1,36 @@
+﻿syntax = "proto3";
+
+option csharp_namespace = "GrpcService";
+
+package greet;
+
+
+service Greeter {
+
+  rpc GetCustomers (Request) returns (ReplyModel);
+  rpc PostCustomer (PostRequest) returns (ReplyPostModel);
+}
+
+message PostRequest {
+ string name = 1;
+  string surname = 2;
+  string adress = 3;
+}
+message ReplyPostModel {
+  int32 id = 1;
+}
+
+
+message Request {
+  string name = 1;
+}
+message ReplyModel {
+  repeated CustomerGrpc customergrpc= 1;
+}
+
+message CustomerGrpc {
+  int32 id = 1;
+  string name = 2;
+  string surname = 3;
+  string adress = 4;
+}

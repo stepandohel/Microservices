@@ -1,25 +1,33 @@
 ﻿using AutoMapper;
+using Catalog.Application.Middleware.ServiceExceptions;
 using Catalog.Application.Models.Category;
-using Catalog.Domain.Interfaces;
+using Catalog.Domain.Repository.Interfaces;
 using MediatR;
 
 namespace Catalog.Application.Category.Queries
 {
     public class GetAllCategoryQueryHandler : IRequestHandler<GetAllCategoryQuery, List<CategoryReadModel>>
     {
-        private readonly IBaseRepository<Domain.Entities.Category, CategoryReadModel, CategoryPostModel, CategoryPutModel> _repository;
+        private readonly IRepositoryManager _repository;
         private readonly IMapper _mapper;
 
-        public GetAllCategoryQueryHandler(IBaseRepository<Domain.Entities.Category, CategoryReadModel, CategoryPostModel, CategoryPutModel> repository, IMapper mapper)
+        public GetAllCategoryQueryHandler(IRepositoryManager repository, IMapper mapper)
         {
             _repository = repository;
             _mapper = mapper;
         }
         public async Task<List<CategoryReadModel>> Handle(GetAllCategoryQuery request, CancellationToken cancellationToken)
         {
-            var items = await _repository.GetAllAsync(cancellationToken);
+            try
+            {
+                var categories = await _repository.CategoryRepository.GetAllAsync(cancellationToken);
 
-            return items;
+                return _mapper.Map<List<CategoryReadModel>>(categories);
+            }
+            catch (Exception ex)
+            {
+                throw new ServiceException(ServiceErrorType.UnknownException, "UnknownExeption", ex);
+            }
         }
     }
 }

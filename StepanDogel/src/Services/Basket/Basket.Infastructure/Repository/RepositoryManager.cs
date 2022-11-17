@@ -3,9 +3,9 @@ using Basket.Infastructure.Repository.Interfaces;
 
 namespace Basket.Infastructure.Repository
 {
-    internal class RepositoryManager : IRepositoryManager
+    public class RepositoryManager : IRepositoryManager
     {
-        private BasketDbContext _dbContext;
+        private readonly BasketDbContext _dbContext;
         private ICustomerRepository _customerRepository;
         private IOrderRepository _orderRepository;
         private IProductRepository _productRepository;
@@ -19,11 +19,8 @@ namespace Basket.Infastructure.Repository
         {
             get
             {
-                if (_productRepository == null)
-                {
-                    _productRepository = new ProductRepository(_dbContext);
-                }
-
+                _productRepository ??= new ProductRepository(_dbContext);
+                
                 return _productRepository;
             }
         }
@@ -32,11 +29,8 @@ namespace Basket.Infastructure.Repository
         {
             get
             {
-                if (_customerRepository == null)
-                {
-                    _customerRepository = new CustomerRepository(_dbContext);
-                }
-
+                _customerRepository ??= new CustomerRepository(_dbContext);
+                
                 return (_customerRepository);
             }
         }
@@ -45,11 +39,8 @@ namespace Basket.Infastructure.Repository
         {
             get
             {
-                if (_orderRepository == null)
-                {
-                    _orderRepository = new OrderRepository(_dbContext);
-                }
-
+                _orderRepository ??= new OrderRepository(_dbContext);
+                
                 return (_orderRepository);
             }
         }

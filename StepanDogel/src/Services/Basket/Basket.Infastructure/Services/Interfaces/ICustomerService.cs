@@ -2,7 +2,7 @@
 
 namespace Basket.Infastructure.Services.Interfaces
 {
-    public interface ICustomerService : ICommonService<CustomerViewModel, CustomerPostModel, CustomerPutModel>
+    public interface ICustomerService : ICommonService<CustomerViewModel, CustomerCreateModel, CustomerUpdateModel>
     {
     }
 }

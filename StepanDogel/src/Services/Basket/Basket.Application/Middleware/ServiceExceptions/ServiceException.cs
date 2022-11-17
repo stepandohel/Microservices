@@ -5,6 +5,7 @@ namespace Basket.Application.Middleware.Exceptions
     public class ServiceException : Exception
     {
         public ServiceErrorType Type { get; set; }
+
         public ServiceException(ServiceErrorType type)
         {
             Type = type;
@@ -19,6 +20,5 @@ namespace Basket.Application.Middleware.Exceptions
         {
             Type = type;
         }
-
     }
 }
